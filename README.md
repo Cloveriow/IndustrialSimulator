@@ -1,6 +1,6 @@
-# IndustrialSimulator - 網路隔離與 SECS/GEM over MQTT 通訊系統模擬器
+# IndustrialSimulator - 網路隔離與 SECS/GEM over MQTT 通訊系統模擬
 
-本專案提供一個多容器編排的微服務模擬系統，實作半導體與工業自動化環境中，控制主機（Host Server）與機台設備（Device Client）在 OT/IT 雙網段隔離拓撲下，透過 **MQTT 傳送 SECS/GEM 報文** 並自動寫入 **Oracle 資料庫** 的完整運作流程。
+本專案提供一個多容器編排的微服務模擬系統，實作自動化環境中，控制主機（Host Server）與機台設備（Device Client）在 OT/IT 雙網段隔離拓撲下，透過 **Raw TCP** 及 **MQTT 傳送 SECS/GEM 報文** 並自動寫入 **Oracle 資料庫** 的完整運作流程。
 
 ---
 
@@ -44,6 +44,24 @@
 
 * <b>動態 Schema 初始化與 Dapper ORM 整合</b><br>
   Host Server 具備 <code>InitDatabaseWithRetryAsync</code> 冷啟動容錯機制，自動處置 Oracle 啟動延遲與 <code>ORA-00942</code> 錯誤；資料寫入採用 SQL <code>MERGE</code> 與 <code>INSERT</code> 處理實時狀態更新與歷史 Log 紀錄。
+
+---
+
+## 運行測試與實測結果
+
+### 1. Raw TCP Socket 直連通訊模式
+在 Raw TCP 通訊架構下，5 台測試設備建立 Socket 連線，Host Server 接收 Telemetry 狀態數據後，由 Dapper 寫入 Oracle DB 之 <code>EquipmentState</code> 表格。
+
+<p align="center">
+  <img src="Picture/TCPIP.png" alt="Raw TCP Mode Testing Result" width="95%" />
+</p>
+
+### 2. SECS/GEM over MQTT 報文解耦模式
+在 MQTT 微服務架構下，設備端發布 S6F11 封包至 <code>mqtt-broker</code>，Host Server 解析主題訊息並寫入 Oracle 資料庫，驗證雙網段解耦與狀態持久化功能。
+
+<p align="center">
+  <img src="Picture/MQTT.png" alt="MQTT SECS/GEM Mode Testing Result" width="95%" />
+</p>
 
 ---
 
