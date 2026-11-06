@@ -1,0 +1,65 @@
+version: '3.8'
+
+networks:
+  db-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  device-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+services:
+  # MQTT Broker (訊息中樞)
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+    networks:
+      db-net:
+        ipv4_address: 172.20.0.10
+      device-net:
+        ipv4_address: 172.21.0.10
+
+  oracle-db:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: oracle-db
+    environment:
+      - ORACLE_PWD=YourPassword123
+    networks:
+      db-net:
+        ipv4_address: 172.20.0.2
+
+  host-server:
+    build:
+      context: ./HostServer
+      dockerfile: Dockerfile
+    container_name: host-server
+    environment:
+      - DB_HOST=172.20.0.2
+      - MQTT_HOST=172.20.0.10
+    depends_on:
+      - oracle-db
+      - mqtt-broker
+    networks:
+      db-net:
+        ipv4_address: 172.20.0.3
+      device-net:
+        ipv4_address: 172.21.0.2
+
+  device-client:
+    build:
+      context: ./DeviceClient
+      dockerfile: Dockerfile
+    container_name: device-client
+    environment:
+      - MQTT_HOST=172.21.0.10
+    depends_on:
+      - mqtt-broker
+    networks:
+      device-net:
+        ipv4_address: 172.21.0.3

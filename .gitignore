@@ -1,0 +1,9 @@
+# .NET Build artifacts
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Docker temporary logs
+*.log
